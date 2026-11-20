@@ -161,8 +161,6 @@ h3{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted
 #gate h1{font-size:19px;margin:0 0 4px}
 #gate p.mini{margin-bottom:20px}
 #gate select{margin:0 0 8px;border-style:solid;color:var(--ink);font-size:14px;padding:10px}
-details{margin-top:18px;font-size:12px;color:var(--muted)}
-details summary{cursor:pointer;margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -197,11 +195,6 @@ details summary{cursor:pointer;margin-bottom:8px}
   <button class="btn" id="gGo">Sign in</button>
   <p class="mini" id="gMsg">Sign in once on this phone. Your name is stamped on every
   line you enter.</p>
-  <details id="gAdv">
-    <summary>Connection</summary>
-    <input class="fld" id="gEp" placeholder="Apps Script /exec URL">
-    <button class="btn alt sm" id="gEpSave">Save &amp; load names</button>
-  </details>
 </div></div>
 
 <div class="toast" id="toast"></div>
@@ -762,8 +755,7 @@ function fillNames(names){
 }
 async function loadNames(){
   fillNames(REMOTE.names||[]);
-  if(!EP()){ $('#gMsg').textContent='This copy has no connection URL yet — open Connection below.';
-    $('#gAdv').open=true; return; }
+  if(!EP()){ $('#gMsg').textContent='App not connected yet — contact the branch manager.'; return; }
   try{
     const res=await fetch(EP(),{method:'POST',redirect:'follow',
       headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'names'})});
@@ -774,7 +766,6 @@ async function loadNames(){
 }
 function showGate(msg){
   $('#gBranch').textContent=CFG.BRANCH;
-  $('#gEp').value=EP();
   $('#gPin').value='';
   if(msg) $('#gMsg').textContent=msg;
   $('#gate').classList.add('on');
@@ -799,7 +790,6 @@ $('#gGo').onclick=async()=>{
   btn.disabled=false; btn.textContent='Sign in';
 };
 $('#gPin').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#gGo').click(); });
-$('#gEpSave').onclick=()=>{ SESS.endpoint=$('#gEp').value.trim(); saveSess(); loadNames(); };
 
 function forceOut(msg){
   SESS.token=''; SESS.role=''; saveSess();

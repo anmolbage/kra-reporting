@@ -61,8 +61,6 @@ About 15 minutes, once.
    **Anyone**. Press Deploy and copy the URL ending in `/exec`.
 4. **Connect the app.** Either send the URL to Claude to put in `index.html` and push, or edit
    `CFG.ENDPOINT` near the top of the script in `index.html` yourself and push.
-   *(To try it before that: open the Pages link, tap **Connection** on the sign-in screen and paste
-   the URL — it is remembered on that phone only.)*
 5. **Sign in** on your phone at https://anmolbage.github.io/kra-reporting/ with your name and the PIN
    from step 2. Then **Add to Home screen** from the browser menu.
 6. **Add staff** from **More → Staff** in the app (name, PIN, role), or straight into the `Staff` tab.
