@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0b3d91">
+<meta name="theme-color" content="#0f5c55">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,13 +14,13 @@
 <title>KRA Reporting</title>
 <style>
 :root{
-  --bg:#f4f5f7; --card:#ffffff; --ink:#15181d; --muted:#6b7280;
-  --line:#e3e6ea; --accent:#0b3d91; --accent-soft:#e8eefb;
+  --bg:#f2f6f5; --card:#ffffff; --ink:#132322; --muted:#5f7370;
+  --line:#dde6e4; --accent:#0f766e; --accent-soft:#e3f3f0; --head:#0f5c55; --gold:#f2a516;
   --ok:#0a7f4f; --warn:#b45309; --bad:#b91c1c; --radius:12px;
 }
 @media (prefers-color-scheme:dark){
-  :root{--bg:#0f1115;--card:#171a20;--ink:#e8eaee;--muted:#9aa2ad;
-        --line:#272b33;--accent:#7aa2f7;--accent-soft:#1c2333;}
+  :root{--bg:#0d1514;--card:#15201f;--ink:#e6efed;--muted:#94a8a4;
+        --line:#243331;--accent:#4fd1c0;--accent-soft:#16312e;--head:#0b3f3b;}
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
@@ -29,7 +29,7 @@ body{background:var(--bg);color:var(--ink);
   padding-bottom:78px}
 .wrap{max-width:560px;margin:0 auto;padding:0 12px}
 
-header{position:sticky;top:0;z-index:20;background:#0b3d91;color:#fff;
+header{position:sticky;top:0;z-index:20;background:var(--head);color:#fff;border-bottom:3px solid var(--gold);
   padding:8px 0;padding-top:max(8px,env(safe-area-inset-top))}
 header .wrap{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 #branch{flex:1;font-weight:650;font-size:15px;min-width:0;white-space:nowrap;
@@ -149,6 +149,10 @@ h3{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted
   color:var(--bg);padding:9px 16px;border-radius:99px;font-size:13px;z-index:99;
   opacity:0;pointer-events:none;transition:opacity .2s;max-width:88%;text-align:center}
 .toast.on{opacity:1}
+@media (prefers-color-scheme:dark){
+  .btn:not(.alt),.strip span.f,.toggle button.on{color:#062b27}
+  .btn:not(.alt){background:var(--accent)}
+}
 
 #gate{position:fixed;inset:0;z-index:60;background:var(--bg);display:none;
   overflow:auto;padding:0 0 30px}
