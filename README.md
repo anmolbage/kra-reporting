@@ -87,7 +87,7 @@ changing their PIN) signs that person out on their next sync. Five wrong PINs lo
 | | |
 |---|---|
 | `Entries` tab | One row per parameter, per person, per day. Re-saving a day replaces that person's rows. |
-| `Staff` tab | Name, PIN, Role (`staff`/`manager`), Active. The only place PINs exist. |
+| `Staff` tab | Name, PIN, Role (`staff`/`manager`), Active. PINs live only here; managers see them in More → Staff (Show PINs / Copy login). |
 | `Targets` tab | Month (`yyyy-mm`), ParamID, TargetCount, TargetAmount — branch level. |
 | Script properties | The token-signing secret and any parameters a manager added. |
 | The phone | Your own lines (saved instantly) and the queue of days not yet sent. |

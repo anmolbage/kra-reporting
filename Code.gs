@@ -272,9 +272,10 @@ function addParam(req) {
 
 /* ================= manager: staff ================= */
 
+// Managers only (checked in doPost): includes PINs so the manager can hand out logins.
 function staffList() {
   return { ok: true, staff: staffRows().map(function (s) {
-    return { name: s.name, role: s.role, active: s.active, hasPin: !!s.pin };
+    return { name: s.name, pin: s.pin, role: s.role, active: s.active };
   }) };
 }
 

@@ -589,7 +589,12 @@ function mtdText(){
 }
 
 /* ---------- MORE ---------- */
-let STAFF=null, editStaff=null;
+let STAFF=null, editStaff=null, showPins=false;
+const APP_URL='https://anmolbage.github.io/kra-reporting/';
+function loginText(s){
+  return 'KRA Reporting — '+CFG.BRANCH+'\nOpen: '+APP_URL+'\nName: '+s.name+'\nPIN: '+s.pin+
+    '\n\nPick your name, type your PIN, then Add to Home screen. Keep your PIN to yourself.';
+}
 function paramOptions(sel){
   return allGroups().map(g=>`<optgroup label="${esc(g.name)}">`+
     g.params.map(p=>`<option value="${p[0]}"${p[0]===sel?' selected':''}>${esc(p[1])}</option>`).join('')
@@ -664,12 +669,16 @@ function staffHTML(){
   if(STAFF===null) return '<p class="mini" style="margin:0">Loading staff…</p>';
   const e=editStaff||{name:'',role:'staff',active:true,isNew:true};
   const list=STAFF.map(s=>`<tr class="click" data-st="${esc(s.name)}">
-      <td class="${s.active?'':'off'}">${esc(s.name)}</td>
-      <td><span class="tag">${s.role}</span></td>
-      <td>${s.active?'Active':'Off'}</td></tr>`).join('');
-  return `<table><tbody>${list}</tbody></table>
-    <p class="mini" style="margin:6px 0 12px">Tap a name to edit. Switching someone off
-    signs them out immediately.</p>
+      <td class="${s.active?'':'off'}">${esc(s.name)}<br><span class="tag">${s.role}</span>
+        ${s.active?'':'<span class="mini"> · off</span>'}</td>
+      <td style="font-family:ui-monospace,monospace">${showPins?esc(s.pin||'—'):'••••'}</td>
+      <td><button class="btn alt sm" data-cp="${esc(s.name)}" style="width:auto;padding:6px 10px">Copy login</button></td></tr>`).join('');
+  return `<div class="btnrow" style="justify-content:flex-end;margin-bottom:4px">
+      <button class="btn alt sm" id="pinTog" style="width:auto;padding:6px 10px">${showPins?'Hide PINs':'Show PINs'}</button></div>
+    <table><thead><tr><th>Name</th><th>PIN</th><th></th></tr></thead><tbody>${list}</tbody></table>
+    <p class="mini" style="margin:6px 0 12px">Tap a name to edit. <b>Copy login</b> copies the app
+    link, name and PIN, ready to send to that person privately. Switching someone off signs them
+    out immediately.</p>
     <input class="fld" id="sfN" placeholder="Name" value="${esc(e.name)}" ${e.isNew?'':'readonly'}>
     <input class="fld" id="sfP" placeholder="${e.isNew?'PIN (4–8 digits)':'New PIN (leave blank to keep)'}"
       inputmode="numeric" type="password" autocomplete="new-password">
@@ -862,6 +871,11 @@ document.addEventListener('click',async ev=>{
       REMOTE.custom=j.custom; saveRemote(); renderMore(); toast('Added for everyone'); }
     catch(err){ toast('Not added — '+err.message); }
     return; }
+
+  if(t.dataset.cp){ const s=STAFF.find(x=>x.name===t.dataset.cp);
+    if(!s||!s.pin){ toast('No PIN set for '+t.dataset.cp); return; }
+    copy(loginText(s)); return; }
+  if(t.id==='pinTog'){ showPins=!showPins; $('#staffBox').innerHTML=staffHTML(); return; }
 
   const st=t.closest('[data-st]');
   if(st){ const s=STAFF.find(x=>x.name===st.dataset.st);
