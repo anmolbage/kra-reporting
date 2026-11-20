@@ -1,5 +1,5 @@
 /* KRA Reporting — offline shell. Bump VERSION when shipping a new index.html. */
-const VERSION = 'kra-v1';
+const VERSION = 'kra-v2';
 const SHELL = ['./', 'index.html', 'manifest.json', 'icon.svg', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {

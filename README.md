@@ -3,8 +3,8 @@
 A phone app for Ramgarh Cantt (443) that turns the day's figures into the branch WhatsApp
 report, so nobody types it by hand.
 
-> **Status: built 20 Nov 2026 (slices 1–4).** Live at https://anmolbage.github.io/kra-reporting/
-> once the Apps Script URL is in `index.html` — see *Setting it up* below.
+> **Status: live 20 Nov 2026 (slices 1–4)** at https://anmolbage.github.io/kra-reporting/ — Sheet: "KRA Reporting" in Drive,
+> Apps Script project "KRA Reporting" bound to it, deployment "v1".
 
 ---
 
