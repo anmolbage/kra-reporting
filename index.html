@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b3d91">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="KRA">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>KRA Reporting</title>
+<style>
+:root{
+  --bg:#f4f5f7; --card:#ffffff; --ink:#15181d; --muted:#6b7280;
+  --line:#e3e6ea; --accent:#0b3d91; --accent-soft:#e8eefb;
+  --ok:#0a7f4f; --warn:#b45309; --bad:#b91c1c; --radius:12px;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0f1115;--card:#171a20;--ink:#e8eaee;--muted:#9aa2ad;
+        --line:#272b33;--accent:#7aa2f7;--accent-soft:#1c2333;}
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);
+  font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  padding-bottom:78px}
+.wrap{max-width:560px;margin:0 auto;padding:0 12px}
+
+header{position:sticky;top:0;z-index:20;background:#0b3d91;color:#fff;
+  padding:8px 0;padding-top:max(8px,env(safe-area-inset-top))}
+header .wrap{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#branch{flex:1;font-weight:650;font-size:15px;min-width:0;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+#dateIn{background:rgba(255,255,255,.16);border:0;color:#fff;border-radius:8px;
+  padding:5px 8px;font:inherit;font-size:13px}
+#dateIn::-webkit-calendar-picker-indicator{filter:invert(1)}
+#chip{background:rgba(255,255,255,.16);border:0;color:#fff;border-radius:99px;
+  padding:5px 10px;font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;
+  white-space:nowrap}
+#chip.err{background:#b45309}
+#whoami{font-size:11.5px;opacity:.85;white-space:nowrap}
+
+nav{position:fixed;bottom:0;left:0;right:0;z-index:30;background:var(--card);
+  border-top:1px solid var(--line);display:flex;
+  padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:0;background:none;color:var(--muted);font:inherit;
+  font-size:11px;padding:9px 2px 8px;display:flex;flex-direction:column;
+  align-items:center;gap:3px;cursor:pointer}
+nav button b{font-size:17px;line-height:1;font-weight:400}
+nav button.on{color:var(--accent);font-weight:600}
+
+section{display:none;padding:12px 0 8px}
+section.on{display:block}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  margin-bottom:10px;overflow:hidden}
+.ghead{display:flex;align-items:center;gap:8px;padding:12px 13px;cursor:pointer;
+  user-select:none}
+.ghead h2{flex:1;margin:0;font-size:13px;font-weight:700;letter-spacing:.5px;
+  text-transform:uppercase}
+.pill{background:var(--accent-soft);color:var(--accent);font-size:11px;
+  font-weight:700;padding:2px 7px;border-radius:99px}
+.chev{color:var(--muted);font-size:12px;transition:transform .15s}
+.card.open .chev{transform:rotate(90deg)}
+.gbody{display:none;border-top:1px solid var(--line);padding:6px 13px 13px}
+.card.open .gbody,.gbody.show{display:block}
+.gbody.show{border:0;padding-top:12px}
+
+.row{display:flex;align-items:center;gap:6px;padding:7px 0;
+  border-bottom:1px solid var(--line)}
+.row:last-of-type{border-bottom:0}
+.row .nm{flex:1;font-size:13.5px;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.row input{width:66px;padding:7px 6px;border:1px solid var(--line);
+  border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;
+  font-size:14px;text-align:right}
+.row input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.row input.amt{width:92px}
+.x{border:0;background:none;color:var(--muted);font-size:17px;padding:2px 4px;
+  cursor:pointer;line-height:1}
+.hint{font-size:10px;color:var(--muted);text-align:center;width:66px;flex:none}
+.hint.amt{width:92px}
+.hdr{display:flex;gap:6px;align-items:center;padding-bottom:2px}
+.hdr .nm{flex:1}
+.mate{font-size:10.5px;color:var(--muted);padding:0 0 6px 1px;margin-top:-4px}
+
+select,.btn,textarea,.fld{font:inherit}
+select{width:100%;margin-top:9px;padding:9px 10px;border:1px dashed var(--line);
+  border-radius:9px;background:var(--bg);color:var(--muted);font-size:13px}
+select.solid{border-style:solid;color:var(--ink);margin:0 0 8px}
+.fld{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;
+  background:var(--bg);color:var(--ink);font-size:14px;margin-bottom:8px}
+.btn{display:block;width:100%;padding:12px;border:0;border-radius:10px;
+  background:var(--accent);color:#fff;font-weight:650;font-size:15px;
+  cursor:pointer;margin-bottom:9px}
+.btn:disabled{opacity:.55}
+.btn.alt{background:var(--card);color:var(--accent);border:1px solid var(--line)}
+.btn.sm{padding:9px;font-size:13px;margin-bottom:0}
+.btnrow{display:flex;gap:8px;margin-bottom:10px}
+.btnrow .btn{margin-bottom:0}
+.chk{display:flex;align-items:center;gap:8px;font-size:14px;margin:2px 0 10px}
+.chk input{width:18px;height:18px}
+
+pre#out{white-space:pre-wrap;word-break:break-word;font:13px/1.5 ui-monospace,
+  SFMono-Regular,Menlo,monospace;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--radius);padding:13px;margin:0 0 10px}
+.toggle{display:flex;gap:6px;margin-bottom:10px}
+.toggle button{flex:1;padding:8px;border:1px solid var(--line);background:var(--card);
+  color:var(--muted);border-radius:9px;font:inherit;font-size:12.5px;cursor:pointer}
+.toggle button.on{background:var(--accent-soft);color:var(--accent);
+  border-color:var(--accent);font-weight:650}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:7px 5px;text-align:right;border-bottom:1px solid var(--line)}
+th{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;
+  font-weight:600}
+th:first-child,td:first-child{text-align:left}
+td.p{font-weight:650}
+.gt{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--accent);
+  text-transform:uppercase;padding-top:12px}
+.bar{height:4px;background:var(--line);border-radius:9px;overflow:hidden;margin-top:3px}
+.bar i{display:block;height:100%;background:var(--accent)}
+.b-ok i{background:var(--ok)} .b-warn i{background:var(--warn)} .b-bad i{background:var(--bad)}
+.dup{color:var(--warn);font-size:11px}
+.off{color:var(--muted);text-decoration:line-through}
+.tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;
+  color:var(--accent)}
+tr.click{cursor:pointer}
+
+.strip{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px}
+.strip span{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;
+  justify-content:center;font-size:10.5px;background:var(--card);cursor:pointer;
+  border:1px solid var(--line);color:var(--muted)}
+.strip span.f{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:650}
+.strip span.t{outline:2px solid var(--accent);outline-offset:1px}
+
+.mini{font-size:12px;color:var(--muted);margin:0 0 10px}
+.big{font-size:22px;font-weight:700}
+.stats{display:flex;gap:8px;margin-bottom:12px}
+.stats div{flex:1;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--radius);padding:11px 12px}
+.stats small{display:block;font-size:10.5px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.4px;margin-bottom:3px}
+h3{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);
+  margin:16px 0 7px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:86px;background:var(--ink);
+  color:var(--bg);padding:9px 16px;border-radius:99px;font-size:13px;z-index:99;
+  opacity:0;pointer-events:none;transition:opacity .2s;max-width:88%;text-align:center}
+.toast.on{opacity:1}
+
+#gate{position:fixed;inset:0;z-index:60;background:var(--bg);display:none;
+  overflow:auto;padding:0 0 30px}
+#gate.on{display:block}
+#gate .wrap{padding-top:56px}
+#gate h1{font-size:19px;margin:0 0 4px}
+#gate p.mini{margin-bottom:20px}
+#gate select{margin:0 0 8px;border-style:solid;color:var(--ink);font-size:14px;padding:10px}
+details{margin-top:18px;font-size:12px;color:var(--muted)}
+details summary{cursor:pointer;margin-bottom:8px}
+</style>
+</head>
+<body>
+
+<header><div class="wrap">
+  <span id="branch"></span>
+  <button id="chip">●</button>
+  <input id="dateIn" type="date">
+  <span id="whoami"></span>
+</div></header>
+
+<div class="wrap">
+  <section id="v-entry" class="on"></section>
+  <section id="v-report"></section>
+  <section id="v-mtd"></section>
+  <section id="v-more"></section>
+</div>
+
+<nav>
+  <button data-v="entry" class="on"><b>✎</b>Entry</button>
+  <button data-v="report"><b>▤</b>Report</button>
+  <button data-v="mtd"><b>▦</b>MTD</button>
+  <button data-v="more"><b>⚙</b>More</button>
+</nav>
+
+<div id="gate"><div class="wrap">
+  <h1>KRA Reporting</h1>
+  <p class="mini" id="gBranch"></p>
+  <select id="gName"><option value="">Your name…</option></select>
+  <input class="fld" id="gPin" placeholder="Your PIN" inputmode="numeric" type="password"
+    autocomplete="current-password">
+  <button class="btn" id="gGo">Sign in</button>
+  <p class="mini" id="gMsg">Sign in once on this phone. Your name is stamped on every
+  line you enter.</p>
+  <details id="gAdv">
+    <summary>Connection</summary>
+    <input class="fld" id="gEp" placeholder="Apps Script /exec URL">
+    <button class="btn alt sm" id="gEpSave">Save &amp; load names</button>
+  </details>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* ============ CONFIG — edit before uploading ============ */
+var CFG = {
+  ENDPOINT : '',                       // your Apps Script /exec URL
+  BRANCH   : 'Ramgarh Cantt (443)'
+};
+/* ========================================================= */
+
+/* ---------- parameter master (PARAMETERS.md — ids are permanent) ---------- */
+const GROUPS = [
+ {id:'adv', name:'Advance', params:[
+  ['adv_total','Total Disbursement','both'],
+  ['adv_hbtl','HBTL','both'],
+  ['adv_ptl','PTL','both'],
+  ['adv_car','CAR','both'],
+  ['adv_srto','SRTO','both'],
+  ['adv_sme','SME','both'],
+  ['adv_gold','Gold / LATDR','both'],
+ ]},
+ {id:'npa', name:'NPA', params:[
+  ['npa_pnpa','PNPA (IRC 3) Reduction','both'],
+  ['npa_red','NPA Reduction','both'],
+  ['npa_auca','AUCA Recovery','both'],
+ ]},
+ {id:'cve', name:'CVE', params:[
+  ['cve_life','SBI Life','both'],
+  ['cve_pai','SBI Gen - PAI','both'],
+  ['cve_arogya','SBI Gen - Arogya','both'],
+  ['cve_other','SBI Gen - Other','both'],
+  ['cve_sip','SIP','both'],
+  ['cve_lump','Lumpsum','both'],
+  ['cve_nps','NPS','both'],
+ ]},
+ {id:'fi', name:'FI', params:[
+  ['cve_apy','APY','count'],
+  ['cve_jjby','PMJJBY','count'],
+  ['cve_sby','PMSBY','count'],
+ ]},
+ {id:'dep', name:'Deposit', params:[
+  ['dep_funded','Funded SB','both'],
+  ['dep_hvsb','High Value SB (>5K)','both'],
+  ['dep_ca','Current Account','both'],
+ ]},
+ {id:'dig', name:'Digital Channel', params:[
+  ['dig_atm','ATM','count'],
+  ['dig_mb','Mobile Banking','count'],
+  ['dig_ib','Internet Banking','count'],
+  ['dig_vkyc','V-KYC','count'],
+  ['dig_img','Image Uploaded','count'],
+  ['dig_wa','WhatsApp Banking','count'],
+  ['dig_fdmb','FD / RD - MB','count'],
+  ['dig_fdib','FD / RD - IB','count'],
+ ]},
+ {id:'cmp', name:'Audit & Compliance', params:[
+  ['cmp_aadhaar','Aadhaar - Dedup','count'],
+  ['cmp_pan','PAN Dedup','count'],
+  ['cmp_nom','Nomination','count'],
+  ['cmp_kyc','KYC','count'],
+  ['cmp_rekyc','RE-KYC','count'],
+  ['cmp_ckyc','C-KYC','count'],
+  ['cmp_scan','Image Scanning','count'],
+  ['cmp_nonkyc','NON-KYC','count'],
+  ['cmp_inop','Inoperative to Operative','count'],
+  ['cmp_deaf','DEAF Retrieval','count'],
+ ]},
+];
+
+/* ---------- storage ---------- */
+const $=s=>document.querySelector(s);
+function load(k,def){ try{ return Object.assign(def,JSON.parse(localStorage.getItem(k)||'{}')); }
+  catch(e){ return def; } }
+function store(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); return true; }
+  catch(e){ return false; } }
+
+// session: who is signed in on this phone. The PIN is never stored.
+const SKEY='kra.sess';
+let SESS=load(SKEY,{user:'',role:'',token:'',endpoint:''});
+const qp=new URLSearchParams(location.search).get('api');
+if(qp){ SESS.endpoint=qp; store(SKEY,SESS); history.replaceState(null,'',location.pathname); }
+function EP(){ return SESS.endpoint||CFG.ENDPOINT; }
+function saveSess(){ store(SKEY,SESS); }
+
+// my own lines, kept per person so a shared phone never mixes two people's figures
+let DB;
+function dbKey(){ return 'kra.db.'+(SESS.user||'_'); }
+function loadDB(){ DB=load(dbKey(),{entries:{},open:{},dirty:{}});
+  DB.entries=DB.entries||{}; DB.open=DB.open||{}; DB.dirty=DB.dirty||{}; }
+function save(){ if(!store(dbKey(),DB)) toast('Phone storage full'); }
+loadDB();
+
+// everybody's rows for the month + targets + extra parameters, as last pulled
+const RKEY='kra.remote';
+let REMOTE=load(RKEY,{month:'',rows:[],targets:{},custom:[],names:[],at:0});
+function saveRemote(){ store(RKEY,REMOTE); }
+
+/* ---------- helpers ---------- */
+let EXTRA=[];                         // parameters only seen in other people's rows
+function allGroups(){
+  return GROUPS.map(g=>({
+    id:g.id, name:g.name,
+    params:g.params
+      .concat((REMOTE.custom||[]).filter(c=>c.g===g.id).map(c=>[c.id,c.n,c.m]))
+      .concat(EXTRA.filter(c=>c.g===g.id).map(c=>[c.id,c.n,c.m]))
+  }));
+}
+function meta(id){
+  for(const g of allGroups()) for(const p of g.params)
+    if(p[0]===id) return {gid:g.id,gname:g.name,name:p[1],mode:p[2]};
+  return null;
+}
+function learn(gid,pid,pname){
+  if(meta(pid)) return;
+  const g = GROUPS.some(x=>x.id===gid) ? gid : 'cmp';
+  EXTRA.push({g:g,id:pid,n:pname||pid,m:'both'});
+}
+const nf=n=>Number(n).toLocaleString('en-IN');
+function fmtDate(iso){ const p=iso.split('-'); return p[2]+'-'+p[1]+'-'+p[0]; }
+function todayISO(){ const d=new Date();
+  return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10); }
+let DATE=todayISO(), MONTH=DATE.slice(0,7);
+function entry(){ return DB.entries[DATE] || (DB.entries[DATE]={}); }
+let toastT;
+function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('on');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),2400); }
+const esc=s=>String(s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+const isMgr=()=>SESS.role==='manager';
+const same=(a,b)=>String(a).trim().toLowerCase()===String(b).trim().toLowerCase();
+
+/* ---------- merged branch data ---------- */
+/* remote row = [date, branch, user, gid, gname, pname, pid, count, amount] */
+function collect(test,myDates){
+  const out={};
+  const add=(pid,u,c,a)=>{ const o=out[pid]=out[pid]||{c:0,a:0,by:{}};
+    o.c+=c; o.a+=a; const b=o.by[u]=o.by[u]||{c:0,a:0}; b.c+=c; b.a+=a; };
+  for(const r of REMOTE.rows){
+    if(!test(String(r[0])) || same(r[2],SESS.user)) continue;   // my rows come from this phone
+    learn(r[3],r[6],r[5]);
+    add(r[6], r[2], Number(r[7])||0, Number(r[8])||0);
+  }
+  for(const d of myDates){
+    const e=DB.entries[d]||{};
+    for(const k in e){ const c=Number(e[k].c)||0, a=Number(e[k].a)||0;
+      if(c||a) add(k, SESS.user, c, a); }
+  }
+  return out;
+}
+const teamDay=date=>collect(d=>d===date,[date]);
+const teamMonth=month=>collect(d=>d.slice(0,7)===month,
+  Object.keys(DB.entries).filter(d=>d.slice(0,7)===month));
+function teamDays(month){
+  const s=new Set();
+  for(const r of REMOTE.rows)
+    if(String(r[0]).slice(0,7)===month && !same(r[2],SESS.user)) s.add(r[0]);
+  for(const d in DB.entries){
+    if(d.slice(0,7)!==month) continue;
+    const e=DB.entries[d];
+    if(Object.keys(e).some(k=>Number(e[k].c)||Number(e[k].a))) s.add(d);
+  }
+  return [...s].sort();
+}
+function targets(){ return REMOTE.month===MONTH ? (REMOTE.targets||{}) : {}; }
+
+/* ---------- server ---------- */
+async function api(payload){
+  if(!EP()) throw new Error('No connection URL set');
+  const res=await fetch(EP(),{
+    method:'POST', redirect:'follow',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},   // simple request — no CORS preflight
+    body:JSON.stringify(Object.assign({user:SESS.user, token:SESS.token},payload))
+  });
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  const j=await res.json();
+  if(j.auth){ forceOut(j.error); throw new Error(j.error); }
+  if(!j.ok) throw new Error(j.error||'Rejected');
+  return j;
+}
+
+/* ---------- sync ---------- */
+let SYNC={state:'idle', last:0, busy:false, again:false};
+function pending(){ return Object.keys(DB.dirty).length; }
+
+function chip(){
+  const c=$('#chip'), n=pending();
+  c.classList.toggle('err', SYNC.state==='err');
+  if(SYNC.busy){ c.textContent='↻ Syncing'; return; }
+  if(SYNC.state==='err'){ c.textContent='⚠ Offline'+(n?' · '+n:''); return; }
+  c.textContent = n ? '↑ '+n+' to send' : '● Synced';
+}
+
+function itemsFor(date){
+  const e=DB.entries[date]||{}, out=[];
+  for(const k in e){
+    const m=meta(k)||{gid:'cmp',gname:'Audit & Compliance',name:k};
+    const v=e[k];
+    out.push({pid:k, pname:m.name, gid:m.gid, gname:m.gname,
+              c:(v.c==null?'':v.c), a:(v.a==null?'':v.a)});
+  }
+  return out;
+}
+
+async function pushAll(){
+  for(const d of Object.keys(DB.dirty).sort()){
+    const stamp=DB.dirty[d];
+    await api({action:'push', date:d, branch:CFG.BRANCH, items:itemsFor(d)});
+    if(DB.dirty[d]===stamp) delete DB.dirty[d];       // edited again meanwhile? keep it queued
+    save();
+  }
+}
+async function pullMonth(m){
+  const j=await api({action:'pull', month:m});
+  REMOTE.month=m; REMOTE.rows=j.rows||[]; REMOTE.targets=j.targets||{};
+  REMOTE.custom=j.custom||[]; REMOTE.at=Date.now(); saveRemote();
+  if(j.role && j.role!==SESS.role){ SESS.role=j.role; saveSess(); whoami(); }
+}
+
+async function sync(opts){
+  opts=opts||{};
+  if(!SESS.token) return;
+  if(SYNC.busy){ SYNC.again=true; return; }
+  SYNC.busy=true; chip();
+  try{
+    await pushAll();
+    await pullMonth(MONTH);
+    SYNC.state='ok'; SYNC.last=Date.now();
+    if(opts.loud) toast('Synced with the branch sheet');
+    if(VIEW!=='entry' || opts.redraw) render();
+  }catch(err){
+    if(SESS.token){ SYNC.state='err'; if(opts.loud) toast('Sync failed — '+err.message); }
+  }
+  SYNC.busy=false; chip();
+  if(SYNC.again){ SYNC.again=false; sync(); }
+}
+let pushT;
+function queueSync(){ DB.dirty[DATE]=Date.now(); save(); chip();
+  clearTimeout(pushT); pushT=setTimeout(()=>sync(),2000); }
+window.addEventListener('online',()=>sync());
+setInterval(()=>{ if(SESS.token && (pending()||SYNC.state==='err') && navigator.onLine!==false) sync(); },30000);
+
+/* ---------- ENTRY ---------- */
+function renderEntry(){
+  const e=DB.entries[DATE]||{}, team=teamDay(DATE);
+  let h='';
+  for(const g of allGroups()){
+    const rows=g.params.filter(p=>p[0] in e);
+    const avail=g.params.filter(p=>!(p[0] in e));
+    const open=DB.open[g.id]||rows.length>0;
+    h+=`<div class="card${open?' open':''}">
+      <div class="ghead" data-tog="${g.id}">
+        <h2>${esc(g.name)}</h2>
+        ${rows.length?`<span class="pill">${rows.length}</span>`:''}
+        <span class="chev">›</span>
+      </div><div class="gbody">`;
+    if(rows.length) h+=`<div class="hdr"><span class="nm"></span>
+      <span class="hint">A/C</span><span class="hint amt">Amount ₹</span>
+      <span style="width:25px"></span></div>`;
+    for(const p of rows){
+      const v=e[p[0]]||{}, m=p[2];
+      h+=`<div class="row">
+        <span class="nm">${esc(p[1])}</span>
+        ${m==='amount'?'<span class="hint">—</span>':
+          `<input inputmode="numeric" data-k="${p[0]}" data-f="c" value="${v.c??''}" placeholder="0">`}
+        ${m==='count'?'<span class="hint amt">—</span>':
+          `<input class="amt" inputmode="decimal" data-k="${p[0]}" data-f="a" value="${v.a??''}" placeholder="0">`}
+        <button class="x" data-del="${p[0]}" aria-label="Remove">×</button>
+      </div>`;
+      const t=team[p[0]];
+      if(t){
+        const others=Object.keys(t.by).filter(u=>!same(u,SESS.user));
+        if(others.length) h+=`<div class="mate">also entered by ${esc(others.join(', '))}
+          — branch total ${t.c?t.c+' A/C':''}${t.c&&t.a?' / ':''}${t.a?nf(t.a):''}</div>`;
+      }
+    }
+    h+=`<select data-add="${g.id}"><option value="">+ add parameter…</option>
+      ${avail.map(p=>`<option value="${p[0]}">${esc(p[1])}</option>`).join('')}
+      </select></div></div>`;
+  }
+  h+=`<div class="btnrow">
+      <button class="btn alt sm" id="repeat">↺ Same lines as last entry</button>
+      <button class="btn alt sm" id="clearDay">Clear my entry</button>
+    </div>
+    <p class="mini">Entering as <b>${esc(SESS.user)}</b>. You edit only your own lines;
+    colleagues' figures are added into the branch total on the Report.</p>`;
+  $('#v-entry').innerHTML=h;
+}
+
+/* ---------- REPORT ---------- */
+let repMode='perf';
+function fmtVal(p,v){
+  const useC=p[2]!=='amount' && v.c, useA=p[2]!=='count' && v.a;
+  if(useC&&useA) return v.c+' A/C / '+nf(v.a);
+  if(useC) return String(v.c);
+  if(useA) return nf(v.a);
+  return '';
+}
+function buildReport(){
+  const team=teamDay(DATE);
+  let t=CFG.BRANCH+'\n📅 Date: '+fmtDate(DATE)+'\n';
+  for(const g of allGroups()){
+    const list=g.params.filter(p=>repMode==='full'||(team[p[0]]&&fmtVal(p,team[p[0]])));
+    if(!list.length) continue;
+    t+='\n'+g.name.toUpperCase()+'\n';
+    let i=1;
+    for(const p of list) t+=(i++)+') '+p[1]+'- '+fmtVal(p,team[p[0]]||{c:0,a:0})+'\n';
+  }
+  return t.trim();
+}
+function renderReport(){
+  const team=teamDay(DATE);
+  const who=new Set(); let dup=0;
+  for(const k in team){ const u=Object.keys(team[k].by); u.forEach(x=>who.add(x));
+    if(u.length>1) dup++; }
+  const age=REMOTE.at?Math.round((Date.now()-REMOTE.at)/60000):null;
+  $('#v-report').innerHTML=`
+    <div class="toggle">
+      <button data-rm="perf" class="${repMode==='perf'?'on':''}">Performed only</button>
+      <button data-rm="full" class="${repMode==='full'?'on':''}">Full format</button>
+    </div>
+    <p class="mini">Entered by: ${who.size?esc([...who].join(', ')):'nobody yet'}
+      · branch data ${age===null?'not loaded yet':age<1?'just now':age+' min old'}
+      ${dup?`<br><span class="dup">⚠ ${dup} parameter${dup>1?'s':''} entered by more than
+      one person — figures are added together. Check for double counting.</span>`:''}</p>
+    <pre id="out">${esc(buildReport())}</pre>
+    <button class="btn" id="copy">Copy report</button>
+    <button class="btn alt" id="wa">Open in WhatsApp</button>
+    <button class="btn alt" id="syncNow">↻ Refresh from branch sheet</button>`;
+}
+
+/* ---------- MTD ---------- */
+function renderMTD(){
+  const days=teamDays(MONTH), mtd=teamMonth(MONTH), dtd=teamDay(DATE), tgs=targets();
+  const [y,m]=MONTH.split('-').map(Number), dim=new Date(y,m,0).getDate();
+  let strip='';
+  for(let i=1;i<=dim;i++){
+    const iso=MONTH+'-'+String(i).padStart(2,'0');
+    strip+=`<span class="${days.includes(iso)?'f':''}${iso===DATE?' t':''}" data-d="${iso}">${i}</span>`;
+  }
+  let rows='';
+  for(const g of allGroups()){
+    const list=g.params.filter(p=>mtd[p[0]]||tgs[p[0]]);
+    if(!list.length) continue;
+    rows+=`<tr><td class="gt" colspan="4">${esc(g.name)}</td></tr>`;
+    for(const p of list){
+      const M=mtd[p[0]]||{c:0,a:0}, D=dtd[p[0]]||{c:0,a:0}, tg=tgs[p[0]]||{};
+      const useAmt=p[2]!=='count' && (tg.a || (!tg.c && M.a));
+      const mv=useAmt?M.a:M.c, dv=useAmt?D.a:D.c, tv=useAmt?tg.a:tg.c;
+      let pc='—';
+      if(tv){ const n=Math.round(mv/tv*100);
+        const cls=n>=100?'b-ok':n>=60?'b-warn':'b-bad';
+        pc=`${n}%<div class="bar ${cls}"><i style="width:${Math.min(n,100)}%"></i></div>`; }
+      rows+=`<tr><td>${esc(p[1])}${tv?`<br><span class="mini">of ${nf(tv)}${useAmt?'':' A/C'}</span>`:''}</td>
+        <td>${dv?nf(dv):'·'}</td><td class="p">${mv?nf(mv):'·'}</td><td>${pc}</td></tr>`;
+    }
+  }
+  $('#v-mtd').innerHTML=`
+    <div class="stats">
+      <div><small>Days entered</small><span class="big">${days.length}</span></div>
+      <div><small>Month</small><input type="month" id="monIn" value="${MONTH}"
+        style="border:0;background:transparent;color:var(--ink);font:inherit;
+        font-size:16px;font-weight:600;padding:0;width:100%"></div>
+    </div>
+    <div class="strip">${strip}</div>
+    ${rows?`<table><thead><tr><th>Parameter</th><th>DTD</th><th>MTD</th><th>vs Target</th></tr>
+      </thead><tbody>${rows}</tbody></table>`:'<p class="mini">No entries yet this month.</p>'}
+    ${REMOTE.month!==MONTH?'<p class="mini">Targets load when the phone syncs this month.</p>':''}
+    <button class="btn alt" id="copyMtd" style="margin-top:14px">Copy MTD summary</button>
+    <button class="btn alt" id="syncNow">↻ Refresh from branch sheet</button>`;
+}
+function mtdText(){
+  const days=teamDays(MONTH), mtd=teamMonth(MONTH), tgs=targets();
+  let t=CFG.BRANCH+'\nMTD — '+MONTH+' ('+days.length+' days)\n';
+  for(const g of allGroups()){
+    const list=g.params.filter(p=>mtd[p[0]]&&fmtVal(p,mtd[p[0]]));
+    if(!list.length) continue;
+    t+='\n'+g.name.toUpperCase()+'\n';
+    let i=1;
+    for(const p of list){
+      const M=mtd[p[0]], tg=tgs[p[0]]||{};
+      const useAmt=p[2]!=='count'&&tg.a, tv=useAmt?tg.a:tg.c, mv=useAmt?M.a:M.c;
+      t+=(i++)+') '+p[1]+'- '+fmtVal(p,M)+(tv?' ('+Math.round(mv/tv*100)+'%)':'')+'\n';
+    }
+  }
+  return t.trim();
+}
+
+/* ---------- MORE ---------- */
+let STAFF=null, editStaff=null;
+function paramOptions(sel){
+  return allGroups().map(g=>`<optgroup label="${esc(g.name)}">`+
+    g.params.map(p=>`<option value="${p[0]}"${p[0]===sel?' selected':''}>${esc(p[1])}</option>`).join('')
+    +'</optgroup>').join('');
+}
+function renderMore(){
+  const last=SYNC.last?new Date(SYNC.last).toLocaleTimeString():'not yet';
+  let h=`
+    <h3>This phone</h3>
+    <div class="card"><div class="gbody show">
+      <p class="mini" style="margin:0 0 10px">Signed in as <b>${esc(SESS.user)}</b>
+        <span class="tag">${esc(SESS.role)}</span><br>
+        Last sync: ${last} · Days waiting to send: ${pending()}</p>
+      <div class="btnrow" style="margin:0">
+        <button class="btn sm" id="syncNow">↻ Sync now</button>
+        <button class="btn alt sm" id="signOut">Sign out</button>
+      </div>
+    </div></div>`;
+
+  if(isMgr()){
+    const tgs=targets();
+    let tr='';
+    for(const g of allGroups()){
+      const list=g.params.filter(p=>tgs[p[0]]);
+      if(!list.length) continue;
+      tr+=`<tr><td class="gt" colspan="3">${esc(g.name)}</td></tr>`;
+      for(const p of list){ const t=tgs[p[0]];
+        tr+=`<tr><td>${esc(p[1])}</td><td>${t.c?t.c+' A/C':''}${t.c&&t.a?' / ':''}${t.a?'₹'+nf(t.a):''}</td>
+          <td><button class="x" data-dt="${p[0]}" aria-label="Remove">×</button></td></tr>`; }
+    }
+    h+=`
+    <h3>Branch targets — ${MONTH}</h3>
+    <div class="card"><div class="gbody show">
+      <select id="tgSel" class="solid"><option value="">choose parameter…</option>${paramOptions('')}</select>
+      <div class="row" style="border:0;padding-top:0">
+        <span class="nm">Target</span>
+        <input id="tgC" inputmode="numeric" placeholder="A/C">
+        <input id="tgA" class="amt" inputmode="decimal" placeholder="Amount ₹">
+      </div>
+      <button class="btn sm" id="tgSave">Set target</button>
+      ${tr?`<table style="margin-top:10px"><tbody>${tr}</tbody></table>`
+          :'<p class="mini" style="margin:10px 0 0">No targets set for this month.</p>'}
+      <p class="mini" style="margin:10px 0 0">Change the month on the MTD tab to set another month.</p>
+    </div></div>
+
+    <h3>Staff</h3>
+    <div class="card"><div class="gbody show" id="staffBox">${staffHTML()}</div></div>
+
+    <h3>Add a parameter</h3>
+    <div class="card"><div class="gbody show">
+      <select id="cpG" class="solid">
+        ${GROUPS.map(g=>`<option value="${g.id}">${esc(g.name)}</option>`).join('')}</select>
+      <input class="fld" id="cpN" placeholder="Parameter name">
+      <select id="cpM" class="solid">
+        <option value="both">A/C + Amount</option>
+        <option value="count">A/C count only</option>
+        <option value="amount">Amount only</option>
+      </select>
+      <button class="btn sm" id="cpSave">Add for everyone</button>
+    </div></div>`;
+  }
+
+  h+=`
+    <h3>Export</h3>
+    <button class="btn alt" id="expCsv">Download ${MONTH} as CSV</button>
+    <p class="mini" style="margin-top:12px">Never put customer names or account numbers
+    into this app. Performance figures only.</p>`;
+  $('#v-more').innerHTML=h;
+  if(isMgr() && STAFF===null) loadStaff();
+}
+function staffHTML(){
+  if(STAFF===null) return '<p class="mini" style="margin:0">Loading staff…</p>';
+  const e=editStaff||{name:'',role:'staff',active:true,isNew:true};
+  const list=STAFF.map(s=>`<tr class="click" data-st="${esc(s.name)}">
+      <td class="${s.active?'':'off'}">${esc(s.name)}</td>
+      <td><span class="tag">${s.role}</span></td>
+      <td>${s.active?'Active':'Off'}</td></tr>`).join('');
+  return `<table><tbody>${list}</tbody></table>
+    <p class="mini" style="margin:6px 0 12px">Tap a name to edit. Switching someone off
+    signs them out immediately.</p>
+    <input class="fld" id="sfN" placeholder="Name" value="${esc(e.name)}" ${e.isNew?'':'readonly'}>
+    <input class="fld" id="sfP" placeholder="${e.isNew?'PIN (4–8 digits)':'New PIN (leave blank to keep)'}"
+      inputmode="numeric" type="password" autocomplete="new-password">
+    <select id="sfR" class="solid">
+      <option value="staff"${e.role==='staff'?' selected':''}>Staff — enters own lines</option>
+      <option value="manager"${e.role==='manager'?' selected':''}>Manager — also targets &amp; staff</option>
+    </select>
+    <label class="chk"><input type="checkbox" id="sfA" ${e.active?'checked':''}> Active (can sign in)</label>
+    <div class="btnrow" style="margin:0">
+      <button class="btn sm" id="sfSave">${e.isNew?'Add staff':'Save '+esc(e.name)}</button>
+      ${e.isNew?'':'<button class="btn alt sm" id="sfNew">+ New person</button>'}
+    </div>`;
+}
+async function loadStaff(){
+  try{ const j=await api({action:'staff'}); STAFF=j.staff; }
+  catch(err){ STAFF=[]; toast('Could not load staff — '+err.message); }
+  if(VIEW==='more' && $('#staffBox')) $('#staffBox').innerHTML=staffHTML();
+}
+
+/* ---------- csv / clipboard ---------- */
+function csv(){
+  const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  let out='Date,Branch,User,Group,Parameter,Count,Amount\n';
+  for(const r of REMOTE.rows) if(String(r[0]).slice(0,7)===MONTH && !same(r[2],SESS.user))
+    out+=[fmtDate(r[0]),q(r[1]),q(r[2]),q(r[4]),q(r[5]),r[7],r[8]].join(',')+'\n';
+  for(const d of Object.keys(DB.entries).sort()){
+    if(d.slice(0,7)!==MONTH) continue;
+    for(const k in DB.entries[d]){
+      const m=meta(k); if(!m) continue; const v=DB.entries[d][k];
+      if(v.c==null&&v.a==null) continue;
+      out+=[fmtDate(d),q(CFG.BRANCH),q(SESS.user),q(m.gname),q(m.name),v.c??'',v.a??''].join(',')+'\n';
+    }
+  }
+  return out;
+}
+function download(name,text,type){
+  const b=new Blob([text],{type:type}), u=URL.createObjectURL(b);
+  const a=document.createElement('a'); a.href=u; a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(u),3000);
+}
+function copy(text){
+  const fb=()=>{ const t=document.createElement('textarea'); t.value=text;
+    t.style.position='fixed'; t.style.opacity='0'; document.body.appendChild(t); t.select();
+    try{document.execCommand('copy');toast('Copied — paste into WhatsApp');}catch(e){toast('Copy failed');}
+    document.body.removeChild(t); };
+  if(navigator.clipboard&&window.isSecureContext)
+    navigator.clipboard.writeText(text).then(()=>toast('Copied — paste into WhatsApp')).catch(fb);
+  else fb();
+}
+
+/* ---------- routing ---------- */
+let VIEW='entry';
+function render(){
+  if(VIEW==='entry') renderEntry();
+  else if(VIEW==='report') renderReport();
+  else if(VIEW==='mtd') renderMTD();
+  else renderMore();
+  chip();
+}
+function go(v){
+  VIEW=v;
+  document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x.dataset.v===v));
+  document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id==='v-'+v));
+  render(); window.scrollTo(0,0);
+  if((v==='report'||v==='mtd') && Date.now()-SYNC.last>8000) sync();
+}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.v));
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden && Date.now()-SYNC.last>15000) sync();
+});
+
+/* ---------- gate (sign-in) ---------- */
+function fillNames(names){
+  const cur=$('#gName').value||SESS.user||'';
+  $('#gName').innerHTML='<option value="">Your name…</option>'+
+    names.map(n=>`<option${same(n,cur)?' selected':''}>${esc(n)}</option>`).join('');
+}
+async function loadNames(){
+  fillNames(REMOTE.names||[]);
+  if(!EP()){ $('#gMsg').textContent='This copy has no connection URL yet — open Connection below.';
+    $('#gAdv').open=true; return; }
+  try{
+    const res=await fetch(EP(),{method:'POST',redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'names'})});
+    const j=await res.json();
+    if(j.ok){ REMOTE.names=j.names; saveRemote(); fillNames(j.names);
+      if(!j.names.length) $('#gMsg').textContent='No active staff in the Staff tab yet.'; }
+  }catch(e){ if(!(REMOTE.names||[]).length) $('#gMsg').textContent='Could not reach the branch sheet. Check signal and try again.'; }
+}
+function showGate(msg){
+  $('#gBranch').textContent=CFG.BRANCH;
+  $('#gEp').value=EP();
+  $('#gPin').value='';
+  if(msg) $('#gMsg').textContent=msg;
+  $('#gate').classList.add('on');
+  loadNames();
+}
+function hideGate(){ $('#gate').classList.remove('on'); }
+$('#gGo').onclick=async()=>{
+  const n=$('#gName').value, p=$('#gPin').value.trim();
+  if(!n){ toast('Pick your name'); return; }
+  if(!p){ toast('Enter your PIN'); return; }
+  const btn=$('#gGo'); btn.disabled=true; btn.textContent='Signing in…';
+  try{
+    const res=await fetch(EP(),{method:'POST',redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'login',name:n,pin:p})});
+    const j=await res.json();
+    if(!j.ok) throw new Error(j.error||'Sign-in failed');
+    SESS.user=j.user; SESS.role=j.role; SESS.token=j.token; saveSess();
+    loadDB(); STAFF=null; editStaff=null; SYNC.state='idle';
+    hideGate(); boot(); go('entry'); sync({loud:true, redraw:true});
+  }catch(err){ toast(err.message==='Failed to fetch'?'No signal — try again':err.message); }
+  btn.disabled=false; btn.textContent='Sign in';
+};
+$('#gPin').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#gGo').click(); });
+$('#gEpSave').onclick=()=>{ SESS.endpoint=$('#gEp').value.trim(); saveSess(); loadNames(); };
+
+function forceOut(msg){
+  SESS.token=''; SESS.role=''; saveSess();
+  showGate(msg||'Signed out — please sign in again.');
+}
+
+/* ---------- header ---------- */
+$('#branch').textContent=CFG.BRANCH;
+$('#dateIn').value=DATE;
+$('#dateIn').onchange=e=>{
+  DATE=e.target.value||todayISO();
+  const m=DATE.slice(0,7);
+  if(m!==MONTH){ MONTH=m; sync(); }
+  render();
+};
+$('#chip').onclick=()=>sync({loud:true});
+
+/* ---------- events ---------- */
+document.addEventListener('click',async ev=>{
+  const t=ev.target;
+
+  const tog=t.closest('[data-tog]');
+  if(tog){ const id=tog.dataset.tog, c=tog.parentElement;
+    const now=!c.classList.contains('open');
+    DB.open[id]=now; save(); c.classList.toggle('open',now); return; }
+
+  if(t.dataset.del){ delete entry()[t.dataset.del];
+    if(!Object.keys(DB.entries[DATE]).length) delete DB.entries[DATE];
+    queueSync(); renderEntry(); return; }
+
+  if(t.dataset.rm){ repMode=t.dataset.rm; renderReport(); return; }
+  if(t.id==='copy'){ copy(buildReport()); return; }
+  if(t.id==='wa'){ location.href='https://wa.me/?text='+encodeURIComponent(buildReport()); return; }
+  if(t.id==='copyMtd'){ copy(mtdText()); return; }
+  if(t.id==='syncNow'){ sync({loud:true}); return; }
+  if(t.dataset.d){ DATE=t.dataset.d; $('#dateIn').value=DATE; renderMTD(); return; }
+
+  if(t.id==='repeat'){
+    const prev=Object.keys(DB.entries).filter(d=>d<DATE).sort().pop();
+    if(!prev){ toast('No earlier entry of yours on this phone'); return; }
+    const e=entry(); let n=0;
+    for(const k in DB.entries[prev]) if(!(k in e)){ e[k]={}; n++; }
+    save(); renderEntry(); toast(n+' lines added'); return; }
+
+  if(t.id==='clearDay'){
+    if(!confirm('Clear all your lines for '+fmtDate(DATE)+'?')) return;
+    DB.entries[DATE]={}; queueSync(); delete DB.entries[DATE]; save(); renderEntry();
+    toast('Your entry cleared'); return; }
+
+  if(t.id==='signOut'){
+    if(pending() && !confirm(pending()+' day(s) not sent yet. They stay on this phone and send '+
+      'when '+SESS.user+' signs in again. Sign out anyway?')) return;
+    SESS.token=''; SESS.role=''; saveSess(); STAFF=null; showGate('Signed out.'); return; }
+
+  if(t.id==='tgSave'){
+    const k=$('#tgSel').value; if(!k){ toast('Choose a parameter'); return; }
+    const c=$('#tgC').value.trim(), a=$('#tgA').value.trim();
+    if(!c&&!a){ toast('Enter a target'); return; }
+    try{ await api({action:'setTarget',month:MONTH,pid:k,pname:(meta(k)||{}).name,c:c,a:a});
+      await pullMonth(MONTH); renderMore(); toast('Target set'); }
+    catch(err){ toast('Not saved — '+err.message); }
+    return; }
+
+  if(t.dataset.dt){
+    try{ await api({action:'setTarget',month:MONTH,pid:t.dataset.dt,c:'',a:''});
+      await pullMonth(MONTH); renderMore(); toast('Target removed'); }
+    catch(err){ toast('Not removed — '+err.message); }
+    return; }
+
+  if(t.id==='cpSave'){
+    const n=$('#cpN').value.trim(); if(!n){ toast('Enter a name'); return; }
+    try{ const j=await api({action:'addParam',group:$('#cpG').value,name:n,mode:$('#cpM').value});
+      REMOTE.custom=j.custom; saveRemote(); renderMore(); toast('Added for everyone'); }
+    catch(err){ toast('Not added — '+err.message); }
+    return; }
+
+  const st=t.closest('[data-st]');
+  if(st){ const s=STAFF.find(x=>x.name===st.dataset.st);
+    editStaff={name:s.name,role:s.role,active:s.active,isNew:false};
+    $('#staffBox').innerHTML=staffHTML(); $('#sfP').focus(); return; }
+  if(t.id==='sfNew'){ editStaff=null; $('#staffBox').innerHTML=staffHTML(); return; }
+  if(t.id==='sfSave'){
+    const name=$('#sfN').value.trim(), pin=$('#sfP').value.trim();
+    if(!name){ toast('Enter a name'); return; }
+    t.disabled=true;
+    try{ const j=await api({action:'saveStaff',name:name,pin:pin||null,
+        role:$('#sfR').value,active:$('#sfA').checked});
+      STAFF=j.staff; editStaff=null; $('#staffBox').innerHTML=staffHTML(); toast('Saved '+name); }
+    catch(err){ toast('Not saved — '+err.message); t.disabled=false; }
+    return; }
+
+  if(t.id==='expCsv'){ download('kra-'+MONTH+'.csv',csv(),'text/csv'); return; }
+});
+
+document.addEventListener('change',ev=>{
+  const s=ev.target;
+  if(s.dataset.add&&s.value){ entry()[s.value]={}; DB.open[s.dataset.add]=true; save(); renderEntry();
+    const i=document.querySelector(`input[data-k="${s.value}"]`); if(i) i.focus(); return; }
+  if(s.id==='monIn' && s.value){ MONTH=s.value; sync(); renderMTD(); return; }
+  if(s.id==='tgSel'){ const m=(meta(s.value)||{}).mode, t=targets()[s.value]||{};
+    $('#tgC').style.visibility=m==='amount'?'hidden':''; $('#tgA').style.visibility=m==='count'?'hidden':'';
+    $('#tgC').value=t.c??''; $('#tgA').value=t.a??''; return; }
+});
+
+document.addEventListener('input',ev=>{
+  const i=ev.target;
+  if(!i.dataset.k) return;
+  const v=i.value.replace(i.dataset.f==='a'?/[^0-9.]/g:/[^0-9]/g,'');
+  if(v!==i.value) i.value=v;
+  const e=entry(); e[i.dataset.k]=e[i.dataset.k]||{};
+  if(v==='') delete e[i.dataset.k][i.dataset.f]; else e[i.dataset.k][i.dataset.f]=Number(v);
+  queueSync();
+});
+
+/* ---------- boot ---------- */
+function whoami(){ $('#whoami').textContent = SESS.user ? '· '+SESS.user+(isMgr()?' ★':'') : ''; }
+function boot(){ whoami(); render(); sync(); }
+if(!SESS.token) showGate(); else boot();
+chip();
+
+if('serviceWorker' in navigator && location.protocol==='https:')
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
