@@ -85,6 +85,12 @@ section.on{display:block}
 .hdr{display:flex;gap:6px;align-items:center;padding-bottom:2px}
 .hdr .nm{flex:1}
 .mate{font-size:10.5px;color:var(--muted);padding:0 0 6px 1px;margin-top:-4px}
+.row.done .nm{font-weight:650;color:var(--accent)}
+.row input:placeholder-shown{background:transparent}
+.cnt{font-size:11px;color:var(--muted);padding:2px 7px;border-radius:99px}
+.cnt.on{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.exall{display:flex;justify-content:flex-end;gap:14px;margin:-2px 2px 8px}
+.exall button{border:0;background:none;color:var(--accent);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:2px}
 
 select,.btn,textarea,.fld{font:inherit}
 select{width:100%;margin-top:9px;padding:9px 10px;border:1px dashed var(--line);
@@ -440,49 +446,43 @@ window.addEventListener('online',()=>sync());
 setInterval(()=>{ if(SESS.token && (pending()||SYNC.state==='err') && navigator.onLine!==false) sync(); },30000);
 
 /* ---------- ENTRY ---------- */
+const hasVal=v=>!!v&&(v.c!=null&&v.c!==''||v.a!=null&&v.a!=='');
+const cntTxt=(n,t)=>n?n+'/'+t:String(t);
+function filled(g,e){ return g.params.filter(p=>hasVal(e[p[0]])).length; }
 function renderEntry(){
   const e=DB.entries[DATE]||{}, team=teamDay(DATE);
-  let h='';
+  let h=`<div class="exall"><button id="expAll">Expand all</button><button id="colAll">Collapse all</button></div>`;
   for(const g of allGroups()){
-    const rows=g.params.filter(p=>p[0] in e);
-    const avail=g.params.filter(p=>!(p[0] in e));
-    const open=DB.open[g.id]||rows.length>0;
-    h+=`<div class="card${open?' open':''}">
+    const n=filled(g,e);
+    h+=`<div class="card${DB.open[g.id]?' open':''}">
       <div class="ghead" data-tog="${g.id}">
         <h2>${esc(g.name)}</h2>
-        ${rows.length?`<span class="pill">${rows.length}</span>`:''}
+        <span class="cnt${n?' on':''}" data-pill="${g.id}">${cntTxt(n,g.params.length)}</span>
         <span class="chev">›</span>
-      </div><div class="gbody">`;
-    if(rows.length) h+=`<div class="hdr"><span class="nm"></span>
-      <span class="hint">A/C</span><span class="hint amt">Amount ₹</span>
-      <span style="width:25px"></span></div>`;
-    for(const p of rows){
+      </div><div class="gbody">
+      <div class="hdr"><span class="nm"></span>
+        <span class="hint">A/C</span><span class="hint amt">Amount ₹</span></div>`;
+    for(const p of g.params){
       const v=e[p[0]]||{}, m=p[2];
-      h+=`<div class="row">
+      h+=`<div class="row${hasVal(v)?' done':''}">
         <span class="nm">${esc(p[1])}</span>
         ${m==='amount'?'<span class="hint">—</span>':
-          `<input inputmode="numeric" data-k="${p[0]}" data-f="c" value="${v.c??''}" placeholder="0">`}
+          `<input inputmode="numeric" data-k="${p[0]}" data-f="c" data-g="${g.id}" value="${v.c??''}" placeholder="–">`}
         ${m==='count'?'<span class="hint amt">—</span>':
-          `<input class="amt" inputmode="decimal" data-k="${p[0]}" data-f="a" value="${v.a??''}" placeholder="0">`}
-        <button class="x" data-del="${p[0]}" aria-label="Remove">×</button>
+          `<input class="amt" inputmode="decimal" data-k="${p[0]}" data-f="a" data-g="${g.id}" value="${v.a??''}" placeholder="–">`}
       </div>`;
       const t=team[p[0]];
       if(t){
         const others=Object.keys(t.by).filter(u=>!same(u,SESS.user));
-        if(others.length) h+=`<div class="mate">also entered by ${esc(others.join(', '))}
-          — branch total ${t.c?t.c+' A/C':''}${t.c&&t.a?' / ':''}${t.a?nf(t.a):''}</div>`;
+        if(others.length) h+=`<div class="mate">${others.map(u=>{const b=t.by[u];
+          return esc(u)+': '+[b.c?b.c+(m==='count'?'':' A/C'):'',b.a?nf(b.a):''].filter(Boolean).join(' / ');}).join(' · ')}</div>`;
       }
     }
-    h+=`<select data-add="${g.id}"><option value="">+ add parameter…</option>
-      ${avail.map(p=>`<option value="${p[0]}">${esc(p[1])}</option>`).join('')}
-      </select></div></div>`;
+    h+=`</div></div>`;
   }
-  h+=`<div class="btnrow">
-      <button class="btn alt sm" id="repeat">↺ Same lines as last entry</button>
-      <button class="btn alt sm" id="clearDay">Clear my entry</button>
-    </div>
-    <p class="mini">Entering as <b>${esc(SESS.user)}</b>. You edit only your own lines;
-    colleagues' figures are added into the branch total on the Report.</p>`;
+  h+=`<button class="btn alt sm" id="clearDay" style="margin-bottom:10px">Clear my entry for ${fmtDate(DATE)}</button>
+    <p class="mini">Entering as <b>${esc(SESS.user)}</b>. Fill only what happened today; leave the rest
+    blank. Colleagues' figures (shown under a line) are added into the branch total on the Report.</p>`;
   $('#v-entry').innerHTML=h;
 }
 
@@ -816,10 +816,6 @@ document.addEventListener('click',async ev=>{
     const now=!c.classList.contains('open');
     DB.open[id]=now; save(); c.classList.toggle('open',now); return; }
 
-  if(t.dataset.del){ delete entry()[t.dataset.del];
-    if(!Object.keys(DB.entries[DATE]).length) delete DB.entries[DATE];
-    queueSync(); renderEntry(); return; }
-
   if(t.dataset.rm){ repMode=t.dataset.rm; renderReport(); return; }
   if(t.id==='copy'){ copy(buildReport()); return; }
   if(t.id==='wa'){ location.href='https://wa.me/?text='+encodeURIComponent(buildReport()); return; }
@@ -827,12 +823,8 @@ document.addEventListener('click',async ev=>{
   if(t.id==='syncNow'){ sync({loud:true}); return; }
   if(t.dataset.d){ DATE=t.dataset.d; $('#dateIn').value=DATE; renderMTD(); return; }
 
-  if(t.id==='repeat'){
-    const prev=Object.keys(DB.entries).filter(d=>d<DATE).sort().pop();
-    if(!prev){ toast('No earlier entry of yours on this phone'); return; }
-    const e=entry(); let n=0;
-    for(const k in DB.entries[prev]) if(!(k in e)){ e[k]={}; n++; }
-    save(); renderEntry(); toast(n+' lines added'); return; }
+  if(t.id==='expAll'||t.id==='colAll'){ const o=t.id==='expAll';
+    allGroups().forEach(g=>DB.open[g.id]=o); save(); renderEntry(); return; }
 
   if(t.id==='clearDay'){
     if(!confirm('Clear all your lines for '+fmtDate(DATE)+'?')) return;
@@ -891,8 +883,6 @@ document.addEventListener('click',async ev=>{
 
 document.addEventListener('change',ev=>{
   const s=ev.target;
-  if(s.dataset.add&&s.value){ entry()[s.value]={}; DB.open[s.dataset.add]=true; save(); renderEntry();
-    const i=document.querySelector(`input[data-k="${s.value}"]`); if(i) i.focus(); return; }
   if(s.id==='monIn' && s.value){ MONTH=s.value; sync(); renderMTD(); return; }
   if(s.id==='tgSel'){ const m=(meta(s.value)||{}).mode, t=targets()[s.value]||{};
     $('#tgC').style.visibility=m==='amount'?'hidden':''; $('#tgA').style.visibility=m==='count'?'hidden':'';
@@ -906,6 +896,10 @@ document.addEventListener('input',ev=>{
   if(v!==i.value) i.value=v;
   const e=entry(); e[i.dataset.k]=e[i.dataset.k]||{};
   if(v==='') delete e[i.dataset.k][i.dataset.f]; else e[i.dataset.k][i.dataset.f]=Number(v);
+  if(!hasVal(e[i.dataset.k])) delete e[i.dataset.k];
+  i.closest('.row').classList.toggle('done',hasVal(e[i.dataset.k]));
+  const g=allGroups().find(x=>x.id===i.dataset.g), pill=document.querySelector('[data-pill="'+i.dataset.g+'"]');
+  if(g&&pill){ const n=filled(g,e); pill.textContent=cntTxt(n,g.params.length); pill.classList.toggle('on',!!n); }
   queueSync();
 });
 
